@@ -1,4 +1,3 @@
-
 // Word frequency counter
 // Inspired by "Exercises in Programming Style"
 // Written by: Chang-Jae Lee
@@ -9,6 +8,7 @@ use std::io::Read;
 use std::str;
 use std::iter::FromIterator;
 use std::collections::{HashSet, HashMap};
+use std::cmp;
 
 struct WordCount {
     word: String,
@@ -29,8 +29,8 @@ impl WordCount {
 fn main() {
     let stop_words_filename = "stop_words.txt";
     let args: Vec<String> = env::args().collect();
-    println!("Hello, world!");
-    println!("args: {:?}", args);
+    //println!("Hello, world!");
+    //println!("args: {:?}", args);
 
     if args.len() < 2 {
         println!("Usage: {} input_filename", args[0]);
@@ -67,7 +67,7 @@ fn main() {
 
     // Read input file
     let mut input_file: File = File::open(&args[1])
-        .expect( format!("Cannot open input file {}", args[1]).as_ref());
+                                .expect( format!("Cannot open input file {}", args[1]).as_ref());
 
     let mut contents: String = String::new();
     input_file.read_to_string(&mut contents)
@@ -82,7 +82,30 @@ fn main() {
                                       .filter(|s: &String| !stop_words_set.contains(s))
                                       .collect();
 
-    println!("{:?}", words);
+    //println!("{:?}", words);
 
     // Count occurrences
+    let mut word_counts: HashMap<String, usize> = HashMap::new();
+
+    for word in words {
+        if let Some(count) = word_counts.get_mut(&word) {
+            *count += 1;
+            continue;
+        }
+        word_counts.insert(word, 1);
+    }
+    //println!("{:?}", word_counts);
+
+    let mut sortable_words: Vec<(&str, usize)> = word_counts.iter().map(|(w, c)| (w.as_str(), *c)).collect();
+    sortable_words.sort_by_key(|a| a.0);
+    sortable_words.sort_by(|a, b| b.1.cmp(&a.1));
+
+    //println!("{:?}", sortable_words);
+
+    // Print first 25 elements
+    let iter_range = cmp::min(sortable_words.len(), 25);
+
+    for occ in &sortable_words[0..iter_range] {
+        println!("{}: {}", occ.0, occ.1);
+    }
 }
