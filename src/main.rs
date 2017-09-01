@@ -1,11 +1,14 @@
 
 // Word frequency counter
 // Inspired by "Exercises in Programming Style"
+// Written by: Chang-Jae Lee
 
 use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::str;
+use std::iter::FromIterator;
+use std::collections::{HashSet, HashMap};
 
 struct WordCount {
     word: String,
@@ -28,6 +31,12 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     println!("Hello, world!");
     println!("args: {:?}", args);
+
+    if args.len() < 2 {
+        println!("Usage: {} input_filename", args[0]);
+        return
+    }
+
     // What to do:
     // 1. Make a stop_word list from file
     // 2. Read input file
@@ -45,14 +54,35 @@ fn main() {
     //println!("{}", contents);
     let mut stop_words: Vec<String> = contents.split(",")
                                             .filter(|s| s.len() != 0)
-                                            .map(|s| s.to_string().to_lowercase())
+                                            .map(|s: &str| s.to_string().to_lowercase())
                                             .collect();
-    let mut ascii_lowers: Vec<String> = (0..26).map(|x| ((x + 'a' as u8) as char).to_string())
-                                                .collect::<Vec<String>>();
+    let mut ascii_lowers: Vec<String> = (0..26)
+                                         .map(|x| ((x + 'a' as u8) as char).to_string())
+                                         .collect::<Vec<String>>();
     stop_words.append(&mut ascii_lowers);
-    for w in stop_words {
-        println!("{}", w);
-    }
+    let stop_words_set: HashSet<String> = HashSet::from_iter(stop_words);
+//    for w in stop_words {
+//        println!("{}", w);
+//    }
 
+    // Read input file
+    let mut input_file: File = File::open(&args[1])
+        .expect( format!("Cannot open input file {}", args[1]).as_ref());
 
+    let mut contents: String = String::new();
+    input_file.read_to_string(&mut contents)
+              .expect("Failed to read input file");
+
+    //println!("contents: \n{}", contents);
+    let words: Vec<String> = contents.chars()
+                                      .map(|c: char| if c.is_alphanumeric() { c } else { ' ' }).collect::<String>()
+                                      .split_whitespace()
+                                      .map(|s: &str| s.to_string().to_lowercase())
+                                      // Remove stop words
+                                      .filter(|s: &String| !stop_words_set.contains(s))
+                                      .collect();
+
+    println!("{:?}", words);
+
+    // Count occurrences
 }
